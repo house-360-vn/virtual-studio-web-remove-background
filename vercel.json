@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "app/api/generate-scene/route.ts": {
+      "maxDuration": 10,
+      "memory": 1024
+    },
+    "app/api/generate-mask/route.ts": {
+      "maxDuration": 10,
+      "memory": 1024
+    },
+    "app/api/generate-video/route.ts": {
+      "maxDuration": 10,
+      "memory": 1024
+    }
+  }
+}
