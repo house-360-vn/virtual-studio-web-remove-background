@@ -921,6 +921,26 @@ function ConfiguratorContent() {
         }
       }
     }
+    // Handle screenshot without background
+    else if (event.type === 'System' && event.action === 'TakeScreenshotNoBackground') {
+      if (event.status === 'OK' && event.data) {
+        const screenshotUrl = typeof event.data === 'string' 
+          ? event.data 
+          : (event.data as { url?: string }).url || '';
+        
+        if (screenshotUrl) {
+          const newScreenshot: Screenshot = {
+            id: `screenshot-nobg-${Date.now()}`,
+            url: screenshotUrl,
+            timestamp: Date.now()
+          };
+          console.log('Screenshot without background taken:', newScreenshot.id);
+          setScreenshots(prev => [newScreenshot, ...prev]);
+        } else {
+          console.error('Screenshot URL not found in response');
+        }
+      }
+    }
     // VIDEO MODE RESPONSES
     else if (event.type === 'Sequence' && event.action === 'GetSequences') {
       console.log('GetSequences response:', event);
@@ -1236,6 +1256,19 @@ function ConfiguratorContent() {
       ns: 'Configurator',
       type: 'System',
       action: 'TakeScreenshot',
+      carId: carId
+    });
+  }, [isReady, carId]);
+
+  const handleScreenshotNoBackground = useCallback(() => {
+    if (!isReady) return;
+    const ps = getPS();
+    if (!ps) return;
+    console.log('Taking screenshot without background...');
+    ps.emitUIInteraction({
+      ns: 'Configurator',
+      type: 'System',
+      action: 'TakeScreenshotNoBackground',
       carId: carId
     });
   }, [isReady, carId]);
@@ -1830,26 +1863,52 @@ function ConfiguratorContent() {
 
               {/* Mode-Specific Controls */}
               {mode === 'photo' ? (
-                <button
-                  disabled={!isReady}
-                  className={`
-                    w-12 h-12 rounded-lg border-2 border-white/30 bg-white overflow-hidden
-                    transition-all duration-200 relative
-                    ${isReady ? 'hover:border-black/30 cursor-pointer' : 'opacity-50 cursor-not-allowed'}
-                  `}
-                  onClick={handleScreenshot}
-                  title="Take Screenshot"
-                >
-                  <div 
-                    className="w-full h-full bg-cover bg-center"
-                    style={{ backgroundImage: `url(/images/buttons/capture.svg)` }}
-                  />
-                  {screenshots.length > 0 && (
-                    <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
-                      {screenshots.length}
+                <>
+                  {/* Regular Screenshot Button */}
+                  <button
+                    disabled={!isReady}
+                    className={`
+                      w-12 h-12 rounded-lg border-2 border-white/30 bg-white overflow-hidden
+                      transition-all duration-200 relative
+                      ${isReady ? 'hover:border-black/30 cursor-pointer' : 'opacity-50 cursor-not-allowed'}
+                    `}
+                    onClick={handleScreenshot}
+                    title="Take Screenshot"
+                  >
+                    <div 
+                      className="w-full h-full bg-cover bg-center"
+                      style={{ backgroundImage: `url(/images/buttons/capture.svg)` }}
+                    />
+                    {/* {screenshots.length > 0 && (
+                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                        {screenshots.length}
+                      </div>
+                    )} */}
+                  </button>
+                  
+                  {/* Screenshot Without Background Button */}
+                  <button
+                    disabled={!isReady}
+                    className={`
+                      w-12 h-12 rounded-lg border-2 border-white/30 bg-white overflow-hidden
+                      transition-all duration-200 relative
+                      ${isReady ? 'hover:border-black/30 cursor-pointer' : 'opacity-50 cursor-not-allowed'}
+                    `}
+                    onClick={handleScreenshotNoBackground}
+                    title="Take Screenshot (No Background)"
+                  >
+                    <div 
+                      className="w-full h-full bg-cover bg-center"
+                      style={{ backgroundImage: `url(/images/buttons/capture-nobg.svg)` }}
+                    />
+                    {/* Icon overlay to indicate "no background" */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                     </div>
-                  )}
-                </button>
+                  </button>
+                </>
               ) : (
                 <VideoModeControls
                   onPlay={handlePlaySequence}
